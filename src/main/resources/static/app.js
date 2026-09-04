@@ -53,10 +53,6 @@ const apiDocsModal = document.getElementById('apiDocsModal');
 const openApiDocsBtn = document.getElementById('openApiDocsBtn');
 const closeApiDocsBtn = document.getElementById('closeApiDocsBtn');
 
-// Theme Switcher Elements
-const themeToggleBtn = document.getElementById('themeToggleBtn');
-const themeToggleLabel = document.getElementById('themeToggleLabel');
-
 // Toast Container
 const toastContainer = document.getElementById('toastContainer');
 
@@ -92,7 +88,6 @@ const TEST_PRESETS = {
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
     fetchTasks();
     fetchStats();
     fetchDbStatus();
@@ -118,11 +113,6 @@ function attachEventListeners() {
         clearSearchBtn.classList.add('hidden');
         fetchTasks();
     });
-
-    // Theme Switcher
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', toggleTheme);
-    }
 
     // Filters
     statusFilter.addEventListener('change', fetchTasks);
@@ -566,56 +556,3 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
-
-// Theme Management
-function initTheme() {
-    let theme = 'dark';
-    try {
-        const savedTheme = localStorage.getItem('taskflow_theme');
-        if (savedTheme) {
-            theme = savedTheme;
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-            theme = 'light';
-        }
-    } catch (e) {
-        console.warn('Unable to access localStorage for theme:', e);
-    }
-
-    applyTheme(theme, false);
-
-    // Listen for OS scheme changes if no explicit user preference is set
-    if (window.matchMedia) {
-        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
-            const currentSaved = localStorage.getItem('taskflow_theme');
-            if (!currentSaved) {
-                applyTheme(e.matches ? 'light' : 'dark', true);
-            }
-        });
-    }
-}
-
-function applyTheme(theme, notify = true) {
-    document.documentElement.setAttribute('data-theme', theme);
-    if (themeToggleLabel) {
-        themeToggleLabel.textContent = theme === 'light' ? 'Light' : 'Dark';
-    }
-    if (themeToggleBtn) {
-        themeToggleBtn.setAttribute('aria-label', theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
-        themeToggleBtn.setAttribute('title', theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme');
-    }
-    if (notify) {
-        showToast(`Theme switched to ${theme === 'light' ? 'Light' : 'Dark'} mode`, 'info');
-    }
-}
-
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
-    try {
-        localStorage.setItem('taskflow_theme', nextTheme);
-    } catch (e) {
-        console.warn('Unable to save theme to localStorage:', e);
-    }
-    applyTheme(nextTheme, true);
-}
-
