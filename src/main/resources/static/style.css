@@ -643,10 +643,9 @@ body {
 
 /* Kanban Board Layout */
 .tasks-kanban {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(280px, 1fr));
-    gap: 1.5rem;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
     width: 100%;
 }
 
@@ -663,6 +662,7 @@ body {
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
+    width: 100%;
     box-shadow: var(--card-shadow);
     transition: var(--transition-smooth), var(--theme-transition);
 }
@@ -671,8 +671,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.65rem;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -750,11 +750,11 @@ body {
 
 /* Kanban Dropzone */
 .kanban-dropzone {
-    min-height: 380px;
+    min-height: 120px;
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
-    padding: 0.35rem;
+    padding: 0.25rem;
     border-radius: var(--radius-md);
     transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     border: 2px dashed transparent;
@@ -772,7 +772,7 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 1rem 1.15rem;
+    padding: 0.95rem 1.1rem;
     cursor: grab;
     transition: var(--transition-smooth), var(--theme-transition);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
