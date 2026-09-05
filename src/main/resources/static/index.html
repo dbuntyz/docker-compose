@@ -251,12 +251,86 @@
                     </svg>
                 </button>
             </div>
+
+            <div class="view-toggle-group" role="group" aria-label="View switch">
+                <button type="button" id="viewGridBtn" class="view-toggle-btn active" title="Switch to Grid View">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Grid</span>
+                </button>
+                <button type="button" id="viewKanbanBtn" class="view-toggle-btn" title="Switch to Kanban Board View">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                        <rect x="10" y="3" width="5" height="12" rx="1"></rect>
+                        <rect x="17" y="3" width="5" height="15" rx="1"></rect>
+                    </svg>
+                    <span>Kanban</span>
+                </button>
+            </div>
         </section>
 
         <!-- Task List Container -->
         <main class="task-list-container">
             <div id="tasksGrid" class="tasks-grid">
                 <!-- Dynamically populated tasks -->
+            </div>
+
+            <!-- Interactive Kanban Board View -->
+            <div id="tasksKanban" class="tasks-kanban hidden">
+                <!-- Column: Pending -->
+                <div class="kanban-column" id="colPending" data-status="PENDING">
+                    <div class="kanban-column-header">
+                        <div class="column-title-wrap">
+                            <span class="column-dot dot-pending"></span>
+                            <h3 class="column-title">Pending</h3>
+                            <span class="column-badge" id="kanbanCountPending">0</span>
+                        </div>
+                        <button type="button" class="column-add-btn" title="Quick Add Pending Task" onclick="openTaskModalWithStatus('PENDING')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                    <div class="kanban-dropzone" id="kanbanPendingList" data-status="PENDING">
+                        <!-- Draggable pending cards inserted here -->
+                    </div>
+                </div>
+
+                <!-- Column: In Progress -->
+                <div class="kanban-column" id="colInProgress" data-status="IN_PROGRESS">
+                    <div class="kanban-column-header">
+                        <div class="column-title-wrap">
+                            <span class="column-dot dot-progress"></span>
+                            <h3 class="column-title">In Progress</h3>
+                            <span class="column-badge" id="kanbanCountInProgress">0</span>
+                        </div>
+                        <button type="button" class="column-add-btn" title="Quick Add In Progress Task" onclick="openTaskModalWithStatus('IN_PROGRESS')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                    <div class="kanban-dropzone" id="kanbanInProgressList" data-status="IN_PROGRESS">
+                        <!-- Draggable in-progress cards inserted here -->
+                    </div>
+                </div>
+
+                <!-- Column: Completed -->
+                <div class="kanban-column" id="colCompleted" data-status="COMPLETED">
+                    <div class="kanban-column-header">
+                        <div class="column-title-wrap">
+                            <span class="column-dot dot-completed"></span>
+                            <h3 class="column-title">Completed</h3>
+                            <span class="column-badge" id="kanbanCountCompleted">0</span>
+                        </div>
+                        <button type="button" class="column-add-btn" title="Quick Add Completed Task" onclick="openTaskModalWithStatus('COMPLETED')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                    <div class="kanban-dropzone" id="kanbanCompletedList" data-status="COMPLETED">
+                        <!-- Draggable completed cards inserted here -->
+                    </div>
+                </div>
             </div>
 
             <div id="emptyState" class="empty-state hidden">

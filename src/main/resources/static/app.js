@@ -57,6 +57,22 @@ const closeApiDocsBtn = document.getElementById('closeApiDocsBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const themeToggleLabel = document.getElementById('themeToggleLabel');
 
+// View Toggle & Kanban Elements
+const viewGridBtn = document.getElementById('viewGridBtn');
+const viewKanbanBtn = document.getElementById('viewKanbanBtn');
+const tasksKanban = document.getElementById('tasksKanban');
+const kanbanPendingList = document.getElementById('kanbanPendingList');
+const kanbanInProgressList = document.getElementById('kanbanInProgressList');
+const kanbanCompletedList = document.getElementById('kanbanCompletedList');
+const kanbanCountPending = document.getElementById('kanbanCountPending');
+const kanbanCountInProgress = document.getElementById('kanbanCountInProgress');
+const kanbanCountCompleted = document.getElementById('kanbanCountCompleted');
+
+// View & Drag State
+let currentViewMode = localStorage.getItem('taskflow_view_mode') || 'grid';
+let currentTasksData = [];
+let draggedTaskId = null;
+
 // Toast Container
 const toastContainer = document.getElementById('toastContainer');
 
@@ -93,6 +109,7 @@ const TEST_PRESETS = {
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initViewMode();
     fetchTasks();
     fetchStats();
     fetchDbStatus();
@@ -123,6 +140,17 @@ function attachEventListeners() {
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', toggleTheme);
     }
+
+    // View Toggle Switcher (Grid vs Kanban)
+    if (viewGridBtn) {
+        viewGridBtn.addEventListener('click', () => setViewMode('grid'));
+    }
+    if (viewKanbanBtn) {
+        viewKanbanBtn.addEventListener('click', () => setViewMode('kanban'));
+    }
+
+    // Setup Kanban Drag and Drop Listeners
+    setupKanbanDropzones();
 
     // Filters
     statusFilter.addEventListener('change', fetchTasks);
@@ -210,12 +238,20 @@ async function fetchTasks() {
         }
 
         const tasks = await response.json();
+        currentTasksData = tasks;
         loadingState.style.display = 'none';
 
         if (tasks.length === 0) {
             emptyState.classList.remove('hidden');
+            tasksGrid.innerHTML = '';
+            renderKanban([]);
         } else {
-            renderTasks(tasks);
+            emptyState.classList.add('hidden');
+            if (currentViewMode === 'kanban') {
+                renderKanban(tasks);
+            } else {
+                renderTasks(tasks);
+            }
         }
     } catch (err) {
         loadingState.style.display = 'none';
@@ -273,7 +309,7 @@ function renderTasks(tasks) {
         const priorityClass = `badge-priority-${task.priority.toLowerCase()}`;
         const formattedStatus = task.status.replace('_', ' ');
 
-        const createdFormatted = task.createdAt 
+        const createdFormatted = task.createdAt
             ? new Date(task.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
             : 'Recently';
 
@@ -617,5 +653,201 @@ function toggleTheme() {
         console.warn('Unable to save theme to localStorage:', e);
     }
     applyTheme(nextTheme, true);
+}
+
+// View Mode Management
+function initViewMode() {
+    setViewMode(currentViewMode);
+}
+
+function setViewMode(mode) {
+    currentViewMode = mode;
+    try {
+        localStorage.setItem('taskflow_view_mode', mode);
+    } catch (e) {
+        console.warn('Could not save view mode:', e);
+    }
+
+    if (mode === 'kanban') {
+        if (viewGridBtn) viewGridBtn.classList.remove('active');
+        if (viewKanbanBtn) viewKanbanBtn.classList.add('active');
+        if (tasksGrid) tasksGrid.classList.add('hidden');
+        if (tasksKanban) tasksKanban.classList.remove('hidden');
+        if (currentTasksData.length > 0) renderKanban(currentTasksData);
+    } else {
+        if (viewKanbanBtn) viewKanbanBtn.classList.remove('active');
+        if (viewGridBtn) viewGridBtn.classList.add('active');
+        if (tasksKanban) tasksKanban.classList.add('hidden');
+        if (tasksGrid) tasksGrid.classList.remove('hidden');
+        if (currentTasksData.length > 0) renderTasks(currentTasksData);
+    }
+}
+
+// Kanban Rendering
+function renderKanban(tasks) {
+    const pending = tasks.filter(t => t.status === 'PENDING');
+    const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS');
+    const completed = tasks.filter(t => t.status === 'COMPLETED');
+
+    if (kanbanCountPending) kanbanCountPending.textContent = pending.length;
+    if (kanbanCountInProgress) kanbanCountInProgress.textContent = inProgress.length;
+    if (kanbanCountCompleted) kanbanCountCompleted.textContent = completed.length;
+
+    renderKanbanColumn(kanbanPendingList, pending, 'Pending');
+    renderKanbanColumn(kanbanInProgressList, inProgress, 'In Progress');
+    renderKanbanColumn(kanbanCompletedList, completed, 'Completed');
+}
+
+function renderKanbanColumn(container, list, statusLabel) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (list.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'kanban-empty-placeholder';
+        empty.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span>No ${statusLabel} tasks</span>
+        `;
+        container.appendChild(empty);
+        return;
+    }
+
+    list.forEach(task => {
+        const card = document.createElement('div');
+        card.className = 'kanban-card';
+        card.id = `kanban-card-${task.id}`;
+        card.setAttribute('draggable', 'true');
+        card.dataset.taskId = task.id;
+
+        const priorityClass = `badge-priority-${task.priority.toLowerCase()}`;
+        const createdFormatted = task.createdAt
+            ? new Date(task.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+            : 'Recent';
+
+        card.innerHTML = `
+            <div>
+                <h4 class="kanban-card-title">${escapeHtml(task.title)}</h4>
+                <p class="kanban-card-desc">${escapeHtml(task.description || 'No description provided.')}</p>
+            </div>
+            <div class="kanban-card-footer">
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span class="badge ${priorityClass}">${task.priority}</span>
+                    <span class="kanban-card-meta">#${task.id} &bull; ${createdFormatted}</span>
+                </div>
+                <div class="task-actions">
+                    <button class="action-btn" title="Cycle Status" onclick="event.stopPropagation(); cycleTaskStatus(${task.id}, '${task.status}')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    </button>
+                    <button class="action-btn" title="Edit Task" onclick="event.stopPropagation(); openEditTaskModal(${task.id})">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </button>
+                    <button class="action-btn delete-btn" title="Delete Task" onclick="event.stopPropagation(); deleteTask(${task.id})">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Drag Events
+        card.addEventListener('dragstart', (e) => {
+            draggedTaskId = task.id;
+            card.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', String(task.id));
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            draggedTaskId = null;
+            document.querySelectorAll('.kanban-dropzone').forEach(dz => dz.classList.remove('drag-over'));
+        });
+
+        container.appendChild(card);
+    });
+}
+
+// Setup Kanban Drag & Drop
+function setupKanbanDropzones() {
+    const dropzones = [kanbanPendingList, kanbanInProgressList, kanbanCompletedList];
+    dropzones.forEach(dz => {
+        if (!dz) return;
+
+        dz.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            dz.classList.add('drag-over');
+        });
+
+        dz.addEventListener('dragleave', (e) => {
+            if (!dz.contains(e.relatedTarget)) {
+                dz.classList.remove('drag-over');
+            }
+        });
+
+        dz.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dz.classList.remove('drag-over');
+
+            const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+            const targetStatus = dz.dataset.status;
+
+            if (!taskId || !targetStatus) return;
+
+            const task = currentTasksData.find(t => String(t.id) === String(taskId));
+            if (task && task.status !== targetStatus) {
+                await moveTaskToStatus(Number(taskId), targetStatus, task.title);
+            }
+        });
+    });
+}
+
+// Move Task Optimistically
+async function moveTaskToStatus(id, newStatus, title) {
+    const task = currentTasksData.find(t => t.id === id);
+    const prevStatus = task ? task.status : null;
+
+    if (task) {
+        task.status = newStatus;
+        if (currentViewMode === 'kanban') {
+            renderKanban(currentTasksData);
+        } else {
+            renderTasks(currentTasksData);
+        }
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/${id}/status?status=${newStatus}`, {
+            method: 'PATCH'
+        });
+
+        if (!response.ok) throw new Error('Failed to update status');
+
+        fetchStats();
+        fetchDbStatus();
+        const statusText = newStatus.replace('_', ' ');
+        showToast(`Moved "${title || 'Task'}" to ${statusText}`, 'success');
+    } catch (err) {
+        if (task && prevStatus) {
+            task.status = prevStatus;
+            if (currentViewMode === 'kanban') {
+                renderKanban(currentTasksData);
+            } else {
+                renderTasks(currentTasksData);
+            }
+        }
+        showToast(`Error updating status: ${err.message}`, 'error');
+    }
+}
+
+// Quick Add with Pre-selected Status
+function openTaskModalWithStatus(status) {
+    openTaskModal();
+    if (taskStatusSelect) {
+        taskStatusSelect.value = status;
+    }
 }
 
