@@ -7,14 +7,14 @@ on:
       - master
     paths:
       - 'src/main/**'
-      - '!src\main\resources\application.properties'
+      - '!src/main/resources/application.properties'
   pull_request:
     branches:
       - main
       - master
     paths:
       - 'src/main/**'
-      - '!src\main\resources\application.properties'
+      - '!src/main/resources/application.properties'
   workflow_dispatch:
 
 permissions:
