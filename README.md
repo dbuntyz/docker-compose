@@ -114,6 +114,24 @@ docker compose up mariadb -d
 mvn spring-boot:run
 ```
 
+## GitHub Actions Deployment to AWS EC2
+
+The workflow at [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs tests, builds the Docker image, pushes it to Docker Hub, and deploys it to an Ubuntu EC2 instance when changes reach `main`.
+
+### Required GitHub repository secrets
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | Docker Hub username and image owner |
+| `DOCKERHUB_TOKEN` | Docker Hub access token with push permission |
+| `EC2_HOST` | EC2 public DNS name or public IP address |
+| `EC2_USERNAME` | Usually `ubuntu` |
+| `EC2_SSH_KEY` | Full contents of the PEM private key |
+
+The EC2 instance must have Docker Engine and the Docker Compose plugin installed. Allow inbound TCP port `8080` in its security group. The deployment uses `/opt/taskflow`, keeps MariaDB data in the `mariadb_data` Docker volume, and serves the application at `http://<EC2_HOST>:8080`.
+
+The production Compose file is [`docker-compose.prod.yml`](docker-compose.prod.yml). Its database defaults match local development; set stronger values in an EC2-side `.env` file before production use if needed.
+
 ---
 
 ## 🧪 Test Data Submission & Presets
