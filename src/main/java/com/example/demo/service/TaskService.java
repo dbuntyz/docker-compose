@@ -24,7 +24,7 @@ public class TaskService {
     @PostConstruct
     public void initSeedData() {
         if (taskRepository.count() == 0) {
-            taskRepository.save(new Task(null, "Set up Spring Boot Application", "Configure pom.xml and basic application architecture with MariaDB JPA", TaskStatus.COMPLETED, TaskPriority.HIGH));
+            taskRepository.save(new Task(null, "Set up Spring Boot Applications", "Configure pom.xml and basic application architecture with MariaDB JPA", TaskStatus.COMPLETED, TaskPriority.HIGH));
             taskRepository.save(new Task(null, "Implement REST Endpoints", "Build CRUD API endpoints for Task entity connected to MariaDB", TaskStatus.IN_PROGRESS, TaskPriority.HIGH));
             taskRepository.save(new Task(null, "Create Web Dashboard UI", "Design interactive frontend with glassmorphic cards, test data form and live filters", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM));
             taskRepository.save(new Task(null, "Write Comprehensive Unit Tests", "Add MockMvc tests to verify API endpoints and validation", TaskStatus.PENDING, TaskPriority.LOW));
